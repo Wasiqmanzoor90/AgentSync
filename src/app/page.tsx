@@ -1,10 +1,12 @@
 "use client"
 
-import LoginForm from "./api/auth/LoginForm"
+import LoginForm from "@/app/pages/auth/LoginForm"
+
+
 
 export default function page()
 {
     return(
         <LoginForm/>
-    )
+       )
 }
