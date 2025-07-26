@@ -16,7 +16,7 @@ export async function GET() {
       );
     }
 
-    // ✅ Verify JWT using secret from .env
+    //  Verify JWT using secret from .env
     const verify = Jwt.verify(token,  process.env.JWT_SECRET!);
 
     return NextResponse.json(

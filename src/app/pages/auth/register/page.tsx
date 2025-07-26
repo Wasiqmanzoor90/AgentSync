@@ -2,8 +2,19 @@
 import { Box, Button, Container, Input } from '@mui/material';
 import Link from 'next/link';
 import React from 'react'
+import {signIn} from 'next-auth/react';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import GoogleIcon from '@mui/icons-material/Google'
 
 function RegisterForm() {
+
+  const githublogin = async()=>{
+signIn('github');
+  };
+
+   const googlelogin = async()=>{
+signIn("google");
+  };
     const RegisterHandler = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formdata = new FormData(e.currentTarget)
@@ -39,6 +50,26 @@ function RegisterForm() {
         <Link href ="/pages/auth/login">
         <Button>Already have an account? signin</Button>
         </Link>
+                <Button
+      variant="contained"
+      color="inherit"
+      startIcon={<GitHubIcon />}
+      onClick={githublogin}
+      sx={{ mt: 2 }}
+    >
+      Sign in with GitHub
+    </Button>
+
+
+           <Button
+      variant="contained"
+      color="inherit"
+      startIcon={<GoogleIcon />}
+      onClick={googlelogin}
+      sx={{ mt: 2 }}
+    >
+      Sign in with google
+    </Button>
         </Container>
     )
 }

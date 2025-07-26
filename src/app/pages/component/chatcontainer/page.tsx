@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Send, Person, SmartToy } from '@mui/icons-material';
 import { useAuth } from '../../../../../hooks/useAuth';
-import isAuthorized from '../../auth/authguard/isAuthorized';
+import LoadingData from '../loading/isLoading';
 import { useRouter } from 'next/navigation';
 
 interface Message {
@@ -27,25 +27,21 @@ interface Message {
 
 export default function ChatContainer() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const { user, isLoading } = useAuth(); // ✅ CORRECTLY extract values from the hook
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-// Inside your component
-const { user, isLoading } = useAuth();
+// 🔒 Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/');
+    }
+  }, [isLoading, user, router]);
 
+  // 🛑 Don't render if still loading or user is missing
+  if (isLoading || !user) return <LoadingData />;
 
-// Redirect if not authenticated
-useEffect(() => {
-  if (!isLoading && !user) {
-    router.replace('/');
-  }
-}, [isLoading, user, router]);
-
-// Prevent SSR mismatch
-if (typeof window === 'undefined' || isLoading || !user) return null;
 
   const sendMessage = async () => {
     if (!input.trim()) return;

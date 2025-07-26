@@ -2,10 +2,22 @@
 import React from 'react';
 import { Box, Button, Container, Input } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {signIn} from 'next-auth/react';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import GoogleIcon from '@mui/icons-material/Google'
 
 
 function LoginForm() {
+const githublogin=async()=>{
+  signIn('github');
+};
 
+const googleLogin=async()=>{
+signIn("google");
+};
+
+const router = useRouter();
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -30,8 +42,7 @@ function LoginForm() {
         localStorage.setItem("id", data.existuser.id)
 
         console.log('Login success:', data);
-
-        // ✅ Redirect to chat page
+router.push("/pages/component/chatcontainer")
 
       } else {
         alert(data.message || 'Login failed');
@@ -54,6 +65,26 @@ function LoginForm() {
       <Link href="/pages/component/chatcontainer">
         <button>Go to Chat</button>
       </Link>
+          <Button
+      variant="contained"
+      color="inherit"
+      startIcon={<GitHubIcon />}
+      onClick={githublogin}
+      sx={{ mt: 2 }}
+    >
+      Sign in with GitHub
+    </Button>
+
+
+           <Button
+      variant="contained"
+      color="inherit"
+      startIcon={<GoogleIcon />}
+      onClick={googleLogin}
+      sx={{ mt: 2 }}
+    >
+      Sign in with google
+    </Button>
 
     </Container>
   );
