@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Paper,
@@ -14,6 +14,9 @@ import {
   Stack,
 } from '@mui/material';
 import { Send, Person, SmartToy } from '@mui/icons-material';
+import { useAuth } from '../../../../../hooks/useAuth';
+import isAuthorized from '../../auth/authguard/isAuthorized';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -23,9 +26,26 @@ interface Message {
 }
 
 export default function ChatContainer() {
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+// Inside your component
+const { user, isLoading } = useAuth();
+
+
+// Redirect if not authenticated
+useEffect(() => {
+  if (!isLoading && !user) {
+    router.replace('/');
+  }
+}, [isLoading, user, router]);
+
+// Prevent SSR mismatch
+if (typeof window === 'undefined' || isLoading || !user) return null;
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -49,7 +69,7 @@ export default function ChatContainer() {
       });
 
       const data = await res.json();
-      
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.response,
@@ -101,8 +121,8 @@ export default function ChatContainer() {
                     <SmartToy />
                   </Avatar>
                 )}
-                
-                <Card sx={{ 
+
+                <Card sx={{
                   bgcolor: msg.isUser ? 'primary.main' : 'grey.100',
                   color: msg.isUser ? 'white' : 'text.primary'
                 }}>

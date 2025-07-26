@@ -1,6 +1,6 @@
 "use client"
 
-import LoginForm from "@/app/pages/auth/LoginForm"
+import LoginForm from "@/app/pages/auth/login/page"
 
 
 

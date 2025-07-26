@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       process.env.JWT_SECRET as string,
       { expiresIn: "5h" }
     );
-    return NextResponse.json({ token, existuser: { email: existuser.email, name: existuser.name } })
+    return NextResponse.json({ token, existuser: { id: existuser.id, email: existuser.email, name: existuser.name } })
 
   } catch (error) {
     return NextResponse.json({ error: "server error" }, { status: 500 });

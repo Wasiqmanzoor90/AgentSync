@@ -31,6 +31,7 @@
     "googleapis": "^154.0.0",
     "ical-generator": "^9.0.0",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "langchain": "^0.3.30",
     "next": "15.4.3",
     "node-ical": "^0.20.1",

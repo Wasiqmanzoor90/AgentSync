@@ -1,23 +1,26 @@
+// hooks/useAuth.ts
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import isAuthorized from "../utils/isAuthorized";
+import isAuthorized from "../src/app/pages/auth/authguard/isAuthorized";
+
 
 export const useAuth = () => {
-  const [user, setUser] = useState<{ email: string; userId: string } | null>(null);
-  const router = useRouter();
+  const [user, setUser] = useState<{ email: string; id: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const tokenUser = await isAuthorized();
-      if (!tokenUser) {
-        router.replace("/login");
-      } else {
+      try {
+        const tokenUser = await isAuthorized();
         setUser(tokenUser);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]); // It's good practice to include router in the dependency array
+  }, []);
 
-  return { user };
+  return { user, isLoading };
 };
