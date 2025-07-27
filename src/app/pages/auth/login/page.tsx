@@ -62,9 +62,7 @@ router.push("/pages/component/chatcontainer")
       <Link href="/pages/auth/register">
         <Button>ok</Button>
       </Link>
-      <Link href="/pages/component/chatcontainer">
-        <button>Go to Chat</button>
-      </Link>
+      
           <Button
       variant="contained"
       color="inherit"
