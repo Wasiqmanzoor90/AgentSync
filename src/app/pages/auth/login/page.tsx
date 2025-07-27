@@ -60,7 +60,7 @@ router.push("/pages/component/chatcontainer")
         <Button type="submit" variant="contained">Login</Button>
       </Box>
       <Link href="/pages/auth/register">
-        <Button>ok</Button>
+        <Button>Dont have and an account sign up</Button>
       </Link>
       
           <Button

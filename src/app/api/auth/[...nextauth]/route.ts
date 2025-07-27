@@ -41,7 +41,7 @@ const authoptions = {
         // You could store the token in session or return it client-side
         const jwtToken = Jwt.sign(
           {
-            id: user.id,
+              id: dbuser?.id, // This is the correct UUID
             email: user.email,
             name: user.name,
           },

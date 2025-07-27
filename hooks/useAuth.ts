@@ -1,10 +1,9 @@
-// hooks/useAuth.ts
-import { useEffect, useState } from "react";
-import isAuthorized from "../src/app/pages/auth/authguard/isAuthorized";
-
+import { useEffect, useState } from 'react';
+import type { User } from '../types/User'; // adjust path if needed
+import isAuthorized from '@/app/pages/auth/authguard/isAuthorized';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<{ email: string; id: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null); // ✅ use full User type
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import Jwt from "jsonwebtoken";
 
-c
+const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   if (req.method !== 'POST') {
