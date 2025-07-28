@@ -15,13 +15,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  usages    Usage[] // 👈 Relation
+  usages    Usage[] //  Relation
+  messages  Message[]//Relation with messages
 }
 
 model Usage {
   id        String   @id @default(uuid())
-  userId    String   @db.Uuid // 👈 Must match User.id type
+  userId    String   @db.Uuid // Must match User.id type
   user      User     @relation(fields: [userId], references: [id])
   date      DateTime
   createdAt DateTime @default(now())
+}
+
+model Message{
+   id        String   @id @default(uuid())
+    userId    String   @db.Uuid // Must match User.id type
+    content String
+      user      User     @relation(fields: [userId], references: [id])
+    createdAt DateTime    @default(now())
 }

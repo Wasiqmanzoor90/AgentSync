@@ -1,6 +1,6 @@
 // components/UsageDisplay.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Chip, LinearProgress, Alert } from '@mui/material';
 
 export interface UsageData {
@@ -11,16 +11,18 @@ export interface UsageData {
 export default function UsageDisplay({
   userId,
   onUsageUpdate,
+  refreshTrigger, // Add this prop to trigger manual refreshes
 }: {
   userId: string;
   onUsageUpdate?: (usage: UsageData) => void;
+  refreshTrigger?: number; // Optional prop that when changed, triggers a refresh
 }) {
   const [dailyUsage, setDailyUsage] = useState(0);
   const [limit, setLimit] = useState(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsage = async () => {
+  const fetchUsage = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/agents/daily-limit?id=${userId}`);
@@ -38,11 +40,29 @@ export default function UsageDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, onUsageUpdate]);
 
   useEffect(() => {
     if (userId) fetchUsage();
-  }, [userId]);
+  }, [userId, fetchUsage]);
+
+  // Add effect to refresh when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger !== undefined && userId) {
+      fetchUsage();
+    }
+  }, [refreshTrigger, fetchUsage, userId]);
+
+  // Optional: Add polling for automatic updates every 30 seconds
+  useEffect(() => {
+    if (!userId) return;
+    
+    const interval = setInterval(() => {
+      fetchUsage();
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [userId, fetchUsage]);
 
   const progressValue = limit > 0 ? (dailyUsage / limit) * 100 : 0;
   const remainingMessages = Math.max(0, limit - dailyUsage);
@@ -58,11 +78,21 @@ export default function UsageDisplay({
         <Typography variant="body2" color="text.secondary">Daily Usage</Typography>
         <Chip label="FREE" size="small" />
       </Box>
-      <LinearProgress value={progressValue} variant="determinate" color={dailyUsage >= limit ? 'error' : 'primary'} sx={{ mb: 1 }} />
+      <LinearProgress 
+        value={progressValue} 
+        variant="determinate" 
+        color={dailyUsage >= limit ? 'error' : 'primary'} 
+        sx={{ mb: 1 }} 
+      />
       <Typography variant="caption" color="text.secondary">
-        {dailyUsage} / {limit} messages used{remainingMessages > 0 && ` (${remainingMessages} remaining)`}
+        {dailyUsage} / {limit} messages used
+        {remainingMessages > 0 && ` (${remainingMessages} remaining)`}
       </Typography>
-      {dailyUsage >= limit && <Alert severity="warning" sx={{ mt: 1 }}>Daily limit reached! Upgrade to continue.</Alert>}
+      {dailyUsage >= limit && (
+        <Alert severity="warning" sx={{ mt: 1 }}>
+          Daily limit reached! Upgrade to continue.
+        </Alert>
+      )}
     </Box>
   );
 }

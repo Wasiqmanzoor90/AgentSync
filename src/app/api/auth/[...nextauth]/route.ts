@@ -64,7 +64,7 @@ const authoptions = {
       }
     },
     async redirect({ baseUrl }: { baseUrl: string }) {
-      return `${baseUrl}/pages/component/chatcontainer`;
+      return `${baseUrl}/pages/chat`;
     },
   },
 };
