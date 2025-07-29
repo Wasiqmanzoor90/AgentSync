@@ -29,12 +29,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Email or Password is incorrect" }, { status: 400 })
     }
     const token = Jwt.sign(
+      
       { userId: existuser.id, email: existuser.email },
       process.env.JWT_SECRET as string,
       { expiresIn: "5h" }
+     
     );
     return NextResponse.json({ token, existuser: { id: existuser.id, email: existuser.email, name: existuser.name } })
 
+    
   } catch (error) {
     return NextResponse.json({ error: "server error" }, { status: 500 });
   }

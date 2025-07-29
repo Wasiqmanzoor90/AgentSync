@@ -1,11 +1,19 @@
-import { Box, Stack, Avatar, Card, CardContent, Typography, CircularProgress } from '@mui/material';
-import { Person, SmartToy } from '@mui/icons-material';
+import { Box, Stack, Avatar, Card, CardContent, Typography, CircularProgress, IconButton } from '@mui/material';
+import { Person, SmartToy, Delete } from '@mui/icons-material';
 import { Message } from '../../../../../types/message';
 
-export default function MessageList({ messages, loading, bottomRef }: {
+export default function MessageList({ 
+  messages, 
+  loading, 
+  bottomRef,
+  onDeleteMessage,
+  deleteLoading
+}: {
   messages: Message[];
   loading: boolean;
   bottomRef: React.RefObject<HTMLDivElement>;
+  onDeleteMessage?: (messageId: string) => void;
+  deleteLoading?: string | null;
 }) {
   return (
     <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
@@ -17,13 +25,56 @@ export default function MessageList({ messages, loading, bottomRef }: {
       )}
 
       {messages.map(msg => (
-        <Box key={msg.id} sx={{ display: 'flex', justifyContent: msg.isUser ? 'flex-end' : 'flex-start', mb: 2 }}>
+        <Box 
+          key={msg.id} 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: msg.isUser ? 'flex-end' : 'flex-start', 
+            mb: 2,
+            position: 'relative',
+            '&:hover .delete-button': {
+              opacity: 1,
+            }
+          }}
+        >
           <Stack direction="row" spacing={1} sx={{ maxWidth: '70%' }}>
             {!msg.isUser && <Avatar sx={{ bgcolor: 'primary.main' }}><SmartToy /></Avatar>}
-            <Card sx={{ bgcolor: msg.isUser ? 'primary.main' : 'grey.100', color: msg.isUser ? 'white' : 'text.primary' }}>
+            <Card sx={{ 
+              bgcolor: msg.isUser ? 'primary.main' : 'grey.100', 
+              color: msg.isUser ? 'white' : 'text.primary',
+              position: 'relative'
+            }}>
               <CardContent sx={{ py: 1 }}>
                 <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{msg.text}</Typography>
               </CardContent>
+              
+              {/* Simple Delete button */}
+              <IconButton
+                className="delete-button"
+                onClick={() => onDeleteMessage && onDeleteMessage(msg.id)}
+                disabled={deleteLoading === msg.id}
+                sx={{
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  backgroundColor: 'error.main',
+                  color: 'white',
+                  width: 24,
+                  height: 24,
+                  '&:hover': {
+                    backgroundColor: 'error.dark',
+                  },
+                }}
+                size="small"
+              >
+                {deleteLoading === msg.id ? (
+                  <CircularProgress size={12} color="inherit" />
+                ) : (
+                  <Delete sx={{ fontSize: 14 }} />
+                )}
+              </IconButton>
             </Card>
             {msg.isUser && <Avatar sx={{ bgcolor: 'secondary.main' }}><Person /></Avatar>}
           </Stack>
