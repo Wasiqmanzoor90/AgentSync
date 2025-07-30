@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("id");
 
     if (!userId) {
-      return NextResponse.json({ error: "User ID missing" }, { status: 400 });
+      return NextResponse.json({ error: "userId missing" }, { status: 400 });
     }
 
     const today = new Date();
