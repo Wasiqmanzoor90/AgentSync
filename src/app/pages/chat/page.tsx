@@ -1,25 +1,38 @@
 'use client';
 import { useState, useEffect, useRef, RefObject } from 'react';
+
+
 import { useRouter } from 'next/navigation';
-import { 
-  Box, 
-  Paper, 
-  TextField, 
-  Button, 
-  Typography, 
-  Container, 
-  Stack, 
-  Alert, 
-  IconButton, 
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Alert,
+  IconButton,
   Fade,
-  useTheme
+  Avatar,
+  Chip,
+  Tooltip,
+  Zoom,
+  Collapse,
+
 } from '@mui/material';
-import { 
-  Send, 
-  DeleteSweep, 
+import {
+  Send,
+ 
   Menu as MenuIcon,
   ChatBubbleOutline,
-  AutoAwesome
+  AutoAwesome,
+  Lightbulb,
+  TrendingUp,
+  Psychology,
+  Code,
+  KeyboardArrowUp,
+  Mic,
+  Stop
 } from '@mui/icons-material';
 import { useAuth } from '../../../../hooks/useAuth';
 import LoadingData from '../component/loading/isLoading';
@@ -28,35 +41,59 @@ import MessageList from '../../pages/component/chat/MessageList';
 import { Message } from '../../../../types/message';
 import SearchHistoryPanel from '../component/chat/inputData';
 import Sidebar from '../component/chat/slidebar';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
-// Color palette constants for consistent theming
+
 const COLORS = {
-  primary: '#2563eb', // Blue
-  primaryLight: '#3b82f6',
-  primaryDark: '#1d4ed8',
-  secondary: '#6366f1', // Indigo
-  success: '#10b981', // Green
-  warning: '#f59e0b', // Amber
-  error: '#ef4444', // Red
-  background: '#f8fafc', // Light gray
+  primary: '#6366f1',
+  primaryLight: '#818cf8',
+  primaryDark: '#4f46e5',
+  secondary: '#ec4899',
+  success: '#10b981',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  gradients: {
+    primary: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    secondary: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)',
+    surface: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+    chat: 'linear-gradient(180deg, #fafbff 0%, #f1f5ff 100%)',
+  },
+  background: '#fafbff',
   surface: '#ffffff',
-  surfaceVariant: '#f1f5f9',
-  border: '#e2e8f0',
-  borderLight: '#f1f5f9',
+  surfaceVariant: '#f8fafc',
+  surfaceElevated: '#ffffff',
+  border: 'rgba(148, 163, 184, 0.2)',
+  borderLight: 'rgba(148, 163, 184, 0.1)',
+  borderFocus: 'rgba(99, 102, 241, 0.3)',
   text: {
     primary: '#0f172a',
-    secondary: '#64748b',
-    muted: '#94a3b8'
+    secondary: '#475569',
+    muted: '#94a3b8',
+    inverse: '#ffffff'
   },
-  shadow: 'rgba(0, 0, 0, 0.1)'
+  shadows: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    glow: '0 0 20px rgba(99, 102, 241, 0.3)',
+  }
 };
+
+const QUICK_ACTIONS = [
+  { icon: <Lightbulb />, label: 'Creative Ideas', color: '#f59e0b' },
+  { icon: <Code />, label: 'Code Help', color: '#10b981' },
+  { icon: <Psychology />, label: 'Analysis', color: '#8b5cf6' },
+  { icon: <TrendingUp />, label: 'Strategy', color: '#06b6d4' },
+];
 
 export default function ChatContainer() {
   const router = useRouter();
-  const theme = useTheme();
+
   const { user, isLoading } = useAuth();
-  
-  // Chat state management
+
+
+  // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,31 +101,57 @@ export default function ChatContainer() {
   const [currentUsage, setCurrentUsage] = useState<UsageData>({ dailyusage: 0, limit: 5 });
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+
+  // Voice state
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    startListening,
+    stopListening
+    
+  } = useSpeechRecognition();
+  const [isVoiceInput, setIsVoiceInput] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle voice input changes
+  useEffect(() => {
+    if (isVoiceInput) {
+      setInput(transcript);
+    }
+  }, [transcript, isVoiceInput]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Redirect to login if user is not authenticated
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !user) router.replace('/');
   }, [isLoading, user, router]);
 
-  // Show loading screen while authenticating
-  if (isLoading || !user) return <LoadingData />;
+  // Handle scroll events
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      setShowScrollToTop(scrollTop < scrollHeight - clientHeight - 100);
+    }
+  };
 
-  // Handle sending messages to AI
+  // Send message to AI
   const sendMessage = async () => {
-    // Validation checks
     if (!input.trim() || loading || currentUsage.dailyusage >= currentUsage.limit) return;
 
+    setIsVoiceInput(false);
+    resetTranscript();
     setUsageError(null);
     const messageText = input.trim();
 
-    // Create and add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text: messageText,
@@ -101,7 +164,6 @@ export default function ChatContainer() {
     setLoading(true);
 
     try {
-      // Step 1: Send message to AI API
       const res = await fetch('/api/agents/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +174,6 @@ export default function ChatContainer() {
       const data = await res.json();
       if (!data.response) throw new Error('No response from AI');
 
-      // Create and add AI response message
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         text: data.response,
@@ -121,14 +182,12 @@ export default function ChatContainer() {
       };
       setMessages((prev) => [...prev, aiMessage]);
 
-      // Step 2: Save user message to database
       await fetch('/api/agents/inputData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, content: messageText }),
       });
 
-      // Step 3: Update usage counter
       const incrementRes = await fetch('/api/agents/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,7 +205,6 @@ export default function ChatContainer() {
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add error message to chat
       const errMsg: Message = {
         id: `error-${Date.now()}`,
         text: 'Something went wrong. Try again.',
@@ -159,7 +217,6 @@ export default function ChatContainer() {
     }
   };
 
-  // Handle Enter key press for sending messages
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -167,7 +224,6 @@ export default function ChatContainer() {
     }
   };
 
-  // Delete individual message
   const deleteMessage = async (messageId: string) => {
     setDeleteLoading(messageId);
     try {
@@ -178,7 +234,6 @@ export default function ChatContainer() {
 
       if (!res.ok) throw new Error(`Failed to delete message: ${res.status}`);
 
-      // Remove message from UI
       setMessages((prev) => prev.filter(msg => msg.id !== messageId));
       setUsageError(null);
     } catch (error) {
@@ -189,289 +244,501 @@ export default function ChatContainer() {
     }
   };
 
+  const scrollToTop = () => {
+    messagesContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleQuickAction = (label: string) => {
+    setInput(`Help me with ${label.toLowerCase()}`);
+  };
+
+  // Voice control functions
+  const startVoiceInput = () => {
+    setIsVoiceInput(true);
+    resetTranscript();
+    SpeechRecognition.startListening({ continuous: true }); //  Works!
+  };
+
+  const stopVoiceInput = () => {
+    setIsVoiceInput(false);
+   SpeechRecognition.stopListening(); // ✅ Correct usage
+  };
+
+  // Text-to-speech function
+  const speak = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  if (isLoading || !user) return <LoadingData />;
+
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      height: '100vh', 
-      bgcolor: COLORS.background,
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
+    <Box sx={{
+      display: 'flex',
+      height: '100vh',
+      background: COLORS.gradients.chat,
+      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      overflow: 'hidden'
     }}>
-      {/* Sidebar for search history */}
+    
+
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        title="Search History"
-        width={320}
-     
+        title="Chat History"
         loading={loading}
       >
         <SearchHistoryPanel userId={user.id} />
       </Sidebar>
 
-      {/* Main chat interface */}
-      <Box sx={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column', 
+      <Box sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
         minWidth: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}>
-        <Container maxWidth="lg" sx={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          py: 0,
-          px: { xs: 1, sm: 2 }
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          maxHeight: '100vh'
         }}>
-          {/* Header section with title and controls */}
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              bgcolor: COLORS.surface,
-              borderBottom: `1px solid ${COLORS.borderLight}`,
+          <Paper
+            elevation={0}
+            sx={{
+              background: 'rgba(255, 255, 255, 0.98)',
               backdropFilter: 'blur(20px)',
-              position: 'sticky',
+              borderBottom: `1px solid ${COLORS.borderLight}`,
+              boxShadow: COLORS.shadows.sm,
+              width: '100%',
+              position: 'fixed',
               top: 0,
+            
+              right: 0,
               zIndex: 1000,
-              borderRadius: 0
+              transition: 'left 0.3s ease'
             }}
           >
-            <Box sx={{ 
-              p: 2, 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center'
+            <Box sx={{
+              p: { xs: 1.5, md: 2 },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              minHeight: 60
             }}>
-              {/* Left section: Menu button and title */}
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <IconButton
-                  onClick={() => setSidebarOpen(true)}
-                  sx={{ 
-                    color: COLORS.text.secondary,
-                    border: `1px solid ${COLORS.border}`,
-                    borderRadius: 2,
-                    width: 40,
-                    height: 40,
-                    '&:hover': { 
-                      bgcolor: COLORS.primaryLight + '10',
-                      borderColor: COLORS.primaryLight,
-                      color: COLORS.primary
-                    },
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <MenuIcon fontSize="small" />
-                </IconButton>
-                
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Box
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Tooltip title="Open chat history" arrow>
+                  <IconButton
+                    onClick={() => setSidebarOpen(true)}
                     sx={{
+                      background: 'rgba(99, 102, 241, 0.1)',
+                      border: `1px solid ${COLORS.borderFocus}`,
+                      borderRadius: 2,
                       width: 36,
                       height: 36,
-                      borderRadius: 2,
-                      bgcolor: COLORS.primary,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: `0 4px 12px ${COLORS.primary}30`
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        background: COLORS.gradients.primary,
+                        color: 'white',
+                        transform: 'translateY(-1px)',
+                        boxShadow: COLORS.shadows.md
+                      }
                     }}
                   >
-                    <AutoAwesome sx={{ color: 'white', fontSize: 20 }} />
-                  </Box>
-                  <Typography 
-                    variant="h6" 
-                    fontWeight={600} 
-                    color={COLORS.text.primary}
-                    sx={{ fontSize: '1.1rem' }}
+                    <MenuIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Avatar
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      background: COLORS.gradients.primary,
+                      boxShadow: COLORS.shadows.glow,
+                      border: '2px solid rgba(255, 255, 255, 0.2)'
+                    }}
                   >
-                    AI Assistant
-                  </Typography>
+                    <AutoAwesome sx={{ fontSize: 16 }} />
+                  </Avatar>
+
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color={COLORS.text.primary}
+                      sx={{
+                        fontSize: '1rem',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.2
+                      }}
+                    >
+                      AI Voice Assistant
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color={COLORS.text.muted}
+                      sx={{ display: { xs: 'none', sm: 'block' }, fontSize: '0.75rem' }}
+                    >
+                      Speak or type your message
+                    </Typography>
+                  </Box>
                 </Stack>
               </Stack>
-            
-            </Box>
 
-            {/* Usage display component */}
-            <UsageDisplay userId={user.id} onUsageUpdate={setCurrentUsage} />
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                  <UsageDisplay userId={user.id} onUsageUpdate={setCurrentUsage} />
+                </Box>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  {/* <Circle sx={{ fontSize: 6, color: COLORS.success }} /> */}
+                </Stack>
+              </Stack>
+            </Box>
           </Paper>
 
-          {/* Error message display */}
-          <Fade in={!!usageError}>
-            <Box sx={{ p: 2 }}>
+          <Box sx={{
+            display: { xs: 'block', md: 'none' },
+            pt: '76px',
+            px: 2,
+            pb: 1
+          }}>
+            <UsageDisplay userId={user.id} onUsageUpdate={setCurrentUsage} />
+          </Box>
+
+          <Box sx={{ px: 2, pt: { xs: 1, md: '76px' }, width: '100%' }}>
+            <Collapse in={!!usageError}>
               {usageError && (
-                <Alert 
-                  severity="error" 
-                  variant="outlined"
-                  sx={{ 
-                    borderRadius: 3,
-                    bgcolor: COLORS.error + '08',
-                    borderColor: COLORS.error + '30',
-                    color: COLORS.error,
-                    '& .MuiAlert-icon': {
-                      color: COLORS.error
+                <Alert
+                  severity="error"
+                  variant="filled"
+                  onClose={() => setUsageError(null)}
+                  sx={{
+                    borderRadius: 2,
+                    boxShadow: COLORS.shadows.md,
+                    mb: 1,
+                    '& .MuiAlert-message': {
+                      fontWeight: 500,
+                      fontSize: '0.875rem'
                     }
                   }}
                 >
                   {usageError}
                 </Alert>
               )}
-            </Box>
-          </Fade>
+            </Collapse>
+          </Box>
 
-          {/* Messages display area */}
-          <Box sx={{ 
-            flex: 1, 
-            overflow: 'hidden', 
-            display: 'flex', 
-            flexDirection: 'column',
-            position: 'relative'
-          }}>
+          <Box
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              px: 2,
+              pb: 1,
+              pt: { xs: 0, md: 1 },
+              minHeight: 0
+            }}
+          >
             {messages.length === 0 ? (
-              // Empty state when no messages
-              <Box sx={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
+              <Box sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'column',
                 textAlign: 'center',
-                p: 4
+                p: { xs: 2, md: 4 },
+                maxWidth: 500,
+                mx: 'auto'
               }}>
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    bgcolor: COLORS.primary + '15',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 3,
-                    border: `2px solid ${COLORS.primary}20`
-                  }}
-                >
-                  <ChatBubbleOutline sx={{ fontSize: 40, color: COLORS.primary }} />
-                </Box>
-                <Typography 
-                  variant="h5" 
-                  fontWeight={600} 
-                  color={COLORS.text.primary} 
-                  gutterBottom
-                  sx={{ fontSize: '1.5rem' }}
-                >
-                  Welcome to AI Assistant
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  color={COLORS.text.secondary} 
-                  sx={{ maxWidth: 400, lineHeight: 1.6 }}
-                >
-                  Start a conversation by typing your message below. I'm here to help with any questions you might have.
-                </Typography>
+                <Zoom in timeout={800}>
+                  <Avatar
+                    sx={{
+                      width: { xs: 60, md: 80 },
+                      height: { xs: 60, md: 80 },
+                      background: COLORS.gradients.primary,
+                      mb: 3,
+                      boxShadow: COLORS.shadows.xl,
+                      border: '3px solid rgba(255, 255, 255, 0.2)'
+                    }}
+                  >
+                    <ChatBubbleOutline sx={{ fontSize: { xs: 30, md: 40 } }} />
+                  </Avatar>
+                </Zoom>
+
+                <Fade in timeout={1200}>
+                  <Box>
+                    <Typography
+                      variant="h3"
+                      fontWeight={800}
+                      color={COLORS.text.primary}
+                      gutterBottom
+                      sx={{
+                        fontSize: { xs: '1.5rem', md: '2rem' },
+                        letterSpacing: '-0.02em',
+                        mb: 1.5
+                      }}
+                    >
+                      Voice-Enabled AI Assistant
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      color={COLORS.text.secondary}
+                      sx={{
+                        fontSize: { xs: '0.9rem', md: '1rem' },
+                        lineHeight: 1.5,
+                        mb: 3,
+                        fontWeight: 400
+                      }}
+                    >
+                      Speak naturally or type your questions. I can help with ideas, code, analysis, and more.
+                    </Typography>
+
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      flexWrap="wrap"
+                      justifyContent="center"
+                      sx={{ gap: 2 }}
+                    >
+                      {QUICK_ACTIONS.map((action, index) => (
+                        <Zoom in timeout={1400 + index * 200} key={action.label}>
+                          <Chip
+                            icon={action.icon}
+                            label={action.label}
+                            onClick={() => handleQuickAction(action.label)}
+                            sx={{
+                              height: 40,
+                              px: 1.5,
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              background: `${action.color}15`,
+                              color: action.color,
+                              border: `1px solid ${action.color}30`,
+                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                              '&:hover': {
+                                background: action.color,
+                                color: 'white',
+                                transform: 'translateY(-2px)',
+                                boxShadow: `0 6px 20px ${action.color}40`
+                              },
+                              '& .MuiChip-icon': {
+                                fontSize: 16,
+                                color: 'inherit'
+                              }
+                            }}
+                          />
+                        </Zoom>
+                      ))}
+                    </Stack>
+                  </Box>
+                </Fade>
               </Box>
             ) : (
-              // Messages list when chat has content
               <MessageList
                 messages={messages}
                 loading={loading}
                 bottomRef={messagesEndRef as RefObject<HTMLDivElement>}
                 onDeleteMessage={deleteMessage}
                 deleteLoading={deleteLoading}
+                // onSpeak={speak}
               />
             )}
           </Box>
 
-          {/* Message input area */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3,
-              bgcolor: COLORS.surface,
-              borderTop: `1px solid ${COLORS.borderLight}`,
+          <Zoom in={showScrollToTop}>
+            <IconButton
+              onClick={scrollToTop}
+              sx={{
+                position: 'fixed',
+                right: 20,
+                bottom: 100,
+                zIndex: 10,
+                background: COLORS.gradients.primary,
+                color: 'white',
+                width: 44,
+                height: 44,
+                boxShadow: COLORS.shadows.lg,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: COLORS.shadows.xl
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              <KeyboardArrowUp />
+            </IconButton>
+          </Zoom>
+
+          <Box
+            sx={{
+              background: 'rgba(255, 255, 255, 0.98)',
               backdropFilter: 'blur(20px)',
-              borderRadius: 0
+              borderTop: `1px solid ${COLORS.borderLight}`,
+              width: '100%',
+              p: 2
             }}
           >
-            <Box sx={{ maxWidth: 768, mx: 'auto' }}>
-              <Stack direction="row" spacing={2} alignItems="flex-end">
-                {/* Message input field */}
-                <TextField
-                  fullWidth
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={loading}
-                  placeholder="Type your message..."
-                  multiline
-                  maxRows={4}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
-                      bgcolor: COLORS.surface,
-                      border: `1px solid ${COLORS.border}`,
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        borderColor: COLORS.primaryLight,
-                        boxShadow: `0 0 0 3px ${COLORS.primary}10`
-                      },
-                      '&.Mui-focused': {
-                        borderColor: COLORS.primary,
-                        boxShadow: `0 0 0 3px ${COLORS.primary}20`,
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: 'none'
-                        }
-                      },
+            <Stack direction="row" spacing={2} alignItems="flex-end">
+              <TextField
+                fullWidth
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  setIsVoiceInput(false);
+                }}
+                onKeyPress={handleKeyPress}
+                disabled={loading || listening}
+                placeholder={listening ? "Listening... Speak now" : "Type or speak your message..."}
+                multiline
+                maxRows={4}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    background: 'white',
+                    border: `1px solid ${listening ? COLORS.primary : COLORS.border}`,
+                    fontSize: '0.95rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      borderColor: COLORS.primaryLight,
+                      boxShadow: `0 2px 8px rgba(99, 102, 241, 0.1)`
+                    },
+                    '&.Mui-focused': {
+                      borderColor: COLORS.primary,
+                      boxShadow: `0 0 0 3px ${COLORS.borderFocus}`,
                       '& .MuiOutlinedInput-notchedOutline': {
                         border: 'none'
                       }
                     },
-                    '& .MuiOutlinedInput-input': {
-                      py: 1.5,
-                      fontSize: '0.95rem',
-                      color: COLORS.text.primary,
-                      '&::placeholder': {
-                        color: COLORS.text.muted,
-                        opacity: 1
-                      }
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
                     }
-                  }}
-                />
-                
-                {/* Send button */}
-                <Button
-                  variant="contained"
-                  onClick={sendMessage}
-                  disabled={loading || !input.trim() || currentUsage.dailyusage >= currentUsage.limit}
-                  sx={{ 
-                    minWidth: 56,
-                    height: 56,
-                    borderRadius: 3,
-                    bgcolor: COLORS.primary,
-                    boxShadow: `0 4px 12px ${COLORS.primary}30`,
-                    border: `1px solid ${COLORS.primary}`,
-                    '&:hover': {
-                      bgcolor: COLORS.primaryDark,
-                      boxShadow: `0 6px 16px ${COLORS.primary}40`,
-                      transform: 'translateY(-1px)'
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)'
-                    },
-                    '&:disabled': {
-                      bgcolor: COLORS.text.muted,
-                      color: 'white',
-                      opacity: 0.6
-                    },
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Send fontSize="small" />
-                </Button>
-              </Stack>
-            </Box>
-          </Paper>
-        </Container>
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    py: 2,
+                    px: 2.5,
+                    fontSize: '0.95rem',
+                    color: COLORS.text.primary,
+                    lineHeight: 1.4,
+                    '&::placeholder': {
+                      color: listening ? COLORS.primary : COLORS.text.muted,
+                      opacity: 1,
+                      fontWeight: listening ? 600 : 400
+                    }
+                  }
+                }}
+              />
+
+              {browserSupportsSpeechRecognition && (
+                <Tooltip title={listening ? "Stop recording" : "Start voice input"}>
+                  <Button
+                    variant={listening ? "contained" : "outlined"}
+                    color={listening ? "error" : "primary"}
+                    onClick={listening ? stopVoiceInput : startVoiceInput}
+                    disabled={loading}
+                    sx={{
+                      minWidth: 48,
+                      height: 48,
+                      borderRadius: 3,
+                      border: listening ? 'none' : undefined,
+                      background: listening 
+                        ? COLORS.error 
+                        : 'rgba(99, 102, 241, 0.1)',
+                      '&:hover': {
+                        background: listening 
+                          ? COLORS.error 
+                          : 'rgba(99, 102, 241, 0.2)'
+                      }
+                    }}
+                  >
+                    {listening ? <Stop fontSize="small" /> : <Mic fontSize="small" />}
+                  </Button>
+                </Tooltip>
+              )}
+
+              <Button
+                variant="contained"
+                onClick={sendMessage}
+                disabled={loading || !input.trim() || currentUsage.dailyusage >= currentUsage.limit}
+                sx={{
+                  minWidth: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  background: COLORS.gradients.primary,
+                  boxShadow: COLORS.shadows.md,
+                  paddingRight: '40px',
+                  border: 'none',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  overflowX: 'hidden',
+                  maxWidth: '100%',
+                  '&:hover': {
+                    background: COLORS.gradients.primary,
+                    transform: 'translateY(-1px)',
+                    boxShadow: COLORS.shadows.lg
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)'
+                  },
+                  '&:disabled': {
+                    background: COLORS.text.muted,
+                    color: 'white',
+                    opacity: 0.6,
+                    transform: 'none'
+                  },
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <Send sx={{ fontSize: 20 }} />
+              </Button>
+            </Stack>
+
+            <Fade in={!loading && input.length === 0}>
+              <Typography
+                variant="caption"
+                color={COLORS.text.muted}
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  mt: 1,
+                  fontSize: '0.75rem'
+                }}
+              >
+                {browserSupportsSpeechRecognition 
+                  ? 'Press mic to speak or type your message • Enter to send' 
+                  : 'Type your message • Enter to send'}
+              </Typography>
+            </Fade>
+
+            {!browserSupportsSpeechRecognition && (
+              <Typography
+                variant="caption"
+                color={COLORS.warning}
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  mt: 1,
+                  fontSize: '0.75rem'
+                }}
+              >
+                Voice input not supported in this browser (try Chrome, Edge, or Firefox)
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
