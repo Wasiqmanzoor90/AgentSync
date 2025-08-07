@@ -8,14 +8,10 @@ import {
   Avatar,
   Tooltip,
 } from '@mui/material';
-import {
-  Menu,
-  AutoAwesome,
-} from '@mui/icons-material';
-import { UsageData } from '../../component/chat/UsageDisplay';
-import UsageDisplay from '../../component/chat/UsageDisplay';
+import { Menu, AutoAwesome } from '@mui/icons-material';
+import UsageDisplay, { UsageData } from '../../component/chat/UsageDisplay';
 
-// Design tokens for consistent styling
+// Design tokens for styling consistency
 const NAVBAR_TOKENS = {
   height: 72,
   colors: {
@@ -38,22 +34,13 @@ const NAVBAR_TOKENS = {
 };
 
 interface NavbarProps {
-  /** Handler for opening the sidebar */
   onMenuClick: () => void;
-  /** Current user ID for usage display */
   userId: string;
-  /** Callback when usage data is updated */
   onUsageUpdate: (usage: UsageData) => void;
-  /** Optional title override */
   title?: string;
-  /** Optional subtitle override */
   subtitle?: string;
 }
 
-/**
- * Navbar component for the chat interface
- * Displays app title, menu button, and usage information
- */
 const Navbar: React.FC<NavbarProps> = ({
   onMenuClick,
   userId,
@@ -65,36 +52,38 @@ const Navbar: React.FC<NavbarProps> = ({
     <Paper
       elevation={0}
       sx={{
-        background: NAVBAR_TOKENS.colors.background,
-        backdropFilter: 'blur(20px)',
-        borderBottom: `1px solid ${NAVBAR_TOKENS.colors.border}`,
-        boxShadow: NAVBAR_TOKENS.shadows.sm,
         position: 'sticky',
         top: 0,
         zIndex: 1000,
         height: NAVBAR_TOKENS.height,
+        bgcolor: NAVBAR_TOKENS.colors.background,
+        backdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${NAVBAR_TOKENS.colors.border}`,
+        boxShadow: NAVBAR_TOKENS.shadows.sm,
       }}
     >
-      <Box sx={{
-        px: NAVBAR_TOKENS.spacing,
-        py: 1.5,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '100%',
-      }}>
-        {/* Left section - Menu button and app info */}
+      <Box
+        sx={{
+          px: NAVBAR_TOKENS.spacing,
+          py: 1.5,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
+        {/* LEFT SECTION: Menu Button + Branding */}
         <Stack direction="row" alignItems="center" spacing={2}>
-          {/* Menu button */}
+          {/* Menu Button */}
           <Tooltip title="Open chat history" arrow>
             <IconButton
               onClick={onMenuClick}
               sx={{
-                background: `${NAVBAR_TOKENS.colors.primary}15`,
-                border: `1px solid ${NAVBAR_TOKENS.colors.primary}30`,
-                borderRadius: NAVBAR_TOKENS.borderRadius,
                 width: 40,
                 height: 40,
+                borderRadius: NAVBAR_TOKENS.borderRadius,
+                background: `${NAVBAR_TOKENS.colors.primary}15`,
+                border: `1px solid ${NAVBAR_TOKENS.colors.primary}30`,
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   background: NAVBAR_TOKENS.colors.primary,
@@ -107,29 +96,27 @@ const Navbar: React.FC<NavbarProps> = ({
             </IconButton>
           </Tooltip>
 
-          {/* App branding section */}
+          {/* App Icon and Title */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            {/* App icon */}
+            {/* Icon */}
             <Avatar
               sx={{
                 width: 36,
                 height: 36,
                 background: NAVBAR_TOKENS.gradients.primary,
                 boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-              
               }}
             >
               <AutoAwesome sx={{ fontSize: 18, color: 'white' }} />
             </Avatar>
 
-            {/* App title and subtitle */}
+            {/* Title and Subtitle */}
             <Box>
               <Typography
-                variant="h6"
                 fontWeight={600}
+                fontSize="1.1rem"
                 color={NAVBAR_TOKENS.colors.text.primary}
-                sx={{ 
-                  fontSize: '1.1rem', 
+                sx={{
                   lineHeight: 1.2,
                   letterSpacing: '-0.01em'
                 }}
@@ -138,8 +125,8 @@ const Navbar: React.FC<NavbarProps> = ({
               </Typography>
               <Typography
                 variant="caption"
-                color={NAVBAR_TOKENS.colors.text.muted}
-                sx={{ 
+                sx={{
+                  color: NAVBAR_TOKENS.colors.text.muted,
                   fontSize: '0.8rem',
                   display: { xs: 'none', sm: 'block' }
                 }}
@@ -150,17 +137,31 @@ const Navbar: React.FC<NavbarProps> = ({
           </Stack>
         </Stack>
 
-        {/* Right section - Usage display */}
-    <Box sx={{ 
-  display: { xs: 'none', md: 'flex' },
-  alignItems: 'center'
-}}>
+        <Box
+  sx={{
+    display: {
+      xs: 'none', // hidden on extra-small (mobile)
+      sm: 'flex', // visible on small screens and up
+    },
+    alignItems: 'center',
+    height: '100%',
+    pl: 2,
+  }}
+>
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+    }}
+  >
+    <UsageDisplay
+      userId={userId}
+      onUsageUpdate={onUsageUpdate}
+    />
+  </Box>
+</Box>
 
-          <UsageDisplay 
-            userId={userId} 
-            onUsageUpdate={onUsageUpdate} 
-          />
-        </Box>
       </Box>
     </Paper>
   );

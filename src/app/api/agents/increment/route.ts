@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
             },
         });
         // 
-        if (dailyUsage >= 5) {
+        if (dailyUsage >= 10) {
             return NextResponse.json(
-                { error: "Daily usage limit of 5 reached" },
+                { error: "Daily usage limit of 10 reached" },
                 { status: 429 }
             );
         }
