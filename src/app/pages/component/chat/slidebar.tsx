@@ -1,7 +1,8 @@
 // components/Sidebar.tsx
 'use client';
 import React from 'react';
-import Cookies from 'js-cookie'
+
+
 import {
   Drawer,
   Box,
@@ -44,14 +45,16 @@ export default function Sidebar({
 }: SidebarProps) {
   const theme = useTheme();
 const router = useRouter();
-const handlelogout= ()=>
-{
-   Cookies.remove("token", { path: "/" });
 
-localStorage.removeItem("user");
-router.push('/')
 
-}
+
+const handleLogout = async () => {
+  // Delete with matching attributes
+  document.cookie = "token=; path=/; max-age=0";
+  localStorage.clear();
+  window.location.href = '/';
+};
+
   return (
     <Drawer
       variant="temporary"
@@ -111,10 +114,20 @@ router.push('/')
         {children}
       </Box>
 
-        <Box>
-            <Button
-            onClick={handlelogout}>Logout</Button>
-        </Box>
+        <Box  width="100%">
+  <Button
+    fullWidth
+    style={{
+      backgroundColor: "#6366f1",
+      color: "white",
+      padding: "8px",
+    }}
+    onClick={handleLogout}
+  >
+    Logout
+  </Button>
+</Box>
+
     </Drawer>
   );
 }

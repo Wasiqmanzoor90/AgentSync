@@ -64,6 +64,21 @@ export default function UsageDisplay({
   const progressValue = limit > 0 ? (dailyUsage / limit) * 100 : 0;
   const remainingMessages = Math.max(0, limit - dailyUsage);
 
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch("/api/checkout", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url; // redirect to Polar checkout
+      } else {
+        alert("Failed to start checkout");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error starting checkout");
+    }
+  };
+
   if (loading)
     return (
       <Box p={2}>
@@ -86,16 +101,16 @@ export default function UsageDisplay({
         {dailyUsage >= limit ? (
           <button
             style={{
-              backgroundColor: '#9b59b6', // Purple
+              backgroundColor:  '#6366f1',
               color: 'white',
               border: 'none',
-              padding: '4px 12px',
+              padding: '8px 12px',
               borderRadius: '20px',
               fontSize: '0.8rem',
               cursor: 'pointer',
               fontWeight: 500
             }}
-            onClick={() => window.location.href = '/upgrade'} // Replace with actual upgrade page
+            onClick={handleUpgrade} // Fixed: removed arrow function wrapper
           >
             Upgrade
           </button>
@@ -110,8 +125,6 @@ export default function UsageDisplay({
         color={dailyUsage >= limit ? 'error' : 'primary'}
         sx={{ mb: 1 }}
       />
-
-      
     </Box>
   );
 }

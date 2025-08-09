@@ -21,8 +21,9 @@ import {
   Login as LoginIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';  
 import { signIn } from 'next-auth/react';
+import Cookies from 'js-cookie';
 
 // Color palette for consistent theming
 const COLORS = {
@@ -144,9 +145,8 @@ function LoginForm() {
       
       if (res.ok && (data.token || data.existuser)) {
         // Set authentication cookie
-     document.cookie = `token=${data.token}; path=/; max-age=86400`; // no space
 
-        
+document.cookie = `token=${data.token}; path=/; max-age=86400`;     
         // Store user data in localStorage
         localStorage.setItem('email', data.existuser.email);
         localStorage.setItem('id', data.existuser.id);

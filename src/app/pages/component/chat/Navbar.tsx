@@ -45,7 +45,7 @@ const Navbar: React.FC<NavbarProps> = ({
   onMenuClick,
   userId,
   onUsageUpdate,
-  title = "AI Voice Assistant",
+  title = "Agent-Sync",
   subtitle = "Speak or type your message"
 }) => {
   return (
