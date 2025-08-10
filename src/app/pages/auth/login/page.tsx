@@ -156,7 +156,7 @@ document.cookie = `token=${data.token}; path=/; max-age=86400`;
         
         // Redirect to chat after short delay
         setTimeout(() => {
-          router.push('/pages/component/chatcontainer');
+          router.push('/pages/chat');
         }, 1000);
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');

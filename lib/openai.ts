@@ -4,10 +4,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
-       'HTTP-Referer': process.env.NODE_ENV === 'production' 
-      ? 'https://agent-sync-git-master-wasiqmanzoor90s-projects.vercel.app' 
-      : 'https://localhost:3000',
-    'X-Title': 'AgentSync Chat App',
+   'HTTP-Referer': 'https://agent-sync-git-master-wasiqmanzoor90s-projects.vercel.app',
+    'X-Title': 'My Chat App',
   },
 });
 
