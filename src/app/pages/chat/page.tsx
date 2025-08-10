@@ -88,11 +88,11 @@ export default function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   // Error and usage state
   const [usageError, setUsageError] = useState<string | null>(null);
   const [currentUsage, setCurrentUsage] = useState<UsageData>({ dailyusage: 0, limit: 5 });
-  
+
   // UI state
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -171,11 +171,14 @@ export default function ChatContainer() {
     setLoading(true);
 
     try {
-      // Send message to AI API
+      // Send message to AI API with sessionId for conversation memory
       const response = await fetch('/api/agents/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({
+          message: messageText,
+          sessionId: user.id // Use user ID as session ID for conversation memory
+        }),
       });
 
       if (!response.ok) {
@@ -196,6 +199,7 @@ export default function ChatContainer() {
       };
       setMessages(prev => [...prev, aiMessage]);
 
+      
       // Save user input to history
       await fetch('/api/agents/inputData', {
         method: 'POST',
@@ -221,7 +225,7 @@ export default function ChatContainer() {
 
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       // Show error message to user
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -250,7 +254,7 @@ export default function ChatContainer() {
    */
   const deleteMessage = async (messageId: string) => {
     setDeleteLoading(messageId);
-    
+
     try {
       const response = await fetch(`/api/agents/inputDelete/${messageId}`, {
         method: "DELETE",
@@ -326,7 +330,7 @@ export default function ChatContainer() {
         />
 
         {/* Mobile usage display - shown below navbar on small screens */}
-        <Box sx={{ 
+        <Box sx={{
           display: { xs: 'block', md: 'none' },
           px: DESIGN_TOKENS.spacing.container,
           py: 1,
@@ -406,7 +410,7 @@ export default function ChatContainer() {
                 color={DESIGN_TOKENS.colors.text.secondary}
                 sx={{ mb: 4, lineHeight: 1.6 }}
               >
-                Start a conversation by speaking or typing. I can help with creative ideas, 
+                Start a conversation by speaking or typing. I can help with creative ideas,
                 code problems, analysis, and strategic planning.
               </Typography>
 
