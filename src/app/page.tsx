@@ -300,7 +300,7 @@ const AgentsYUCLanding = () => {
                 </div>
                 <p className="text-gray-600">For large organizations</p>
               </div>
-
+{/* ol */}
               <div className="space-y-4 mb-8">
                 <div className="flex items-center">
                   <Check className="w-5 h-5 text-green-500 mr-3" />
