@@ -1,4 +1,4 @@
-'use client';
+'use client'
 import { useState, useEffect, useRef, RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -83,6 +83,18 @@ const QUICK_ACTIONS = [
 export default function ChatContainer() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+ 
+
+   const [id, setId] = useState<string | null>(null);
+
+  // Load id from localStorage on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedId = localStorage.getItem('id');
+      if (storedId) setId(storedId);
+    }
+  }, []);
+
 
   // Core chat state management
   const [messages, setMessages] = useState<Message[]>([]);
@@ -199,19 +211,20 @@ export default function ChatContainer() {
       };
       setMessages(prev => [...prev, aiMessage]);
 
-
+console.log("myname iswasiq",id)
       // Save user input to history
       await fetch('/api/agents/inputData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, content: messageText }),
+        
+        body: JSON.stringify({ userId: id, content: messageText }),
       });
 
       // Update usage counter
       const incrementResponse = await fetch('/api/agents/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id }),
+        body: JSON.stringify({ userId: id }),
       });
 
       if (!incrementResponse.ok) {

@@ -81,7 +81,7 @@ interface Props {
   userId: string;
 }
 
-export default function SearchHistoryPanel({ userId }: Props) {
+export default function SearchHistoryPanel({ }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,6 +91,15 @@ export default function SearchHistoryPanel({ userId }: Props) {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+const [userId, setUserId] = useState<string | null>(null);
+
+useEffect(() => {
+  const storedId = localStorage.getItem('id');
+  if (storedId) {
+    setUserId(storedId);
+    console.log("hello", storedId);
+  }
+}, []);
 
   useEffect(() => {
     const fetchSearchHistory = async () => {
@@ -98,11 +107,12 @@ export default function SearchHistoryPanel({ userId }: Props) {
       setError(null);
 
       try {
-        const res = await fetch(`/api/agents/inputData?id=${userId}`);
-        if (!res.ok) throw new Error('Failed to fetch messages');
-        const data = await res.json();
-        const messageData = data.data || [];
-        setMessages(messageData);
+       const res = await fetch(`/api/agents/inputData?id=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch messages');
+      const data = await res.json();
+      const messageData = data.data || [];
+      setMessages(messageData);
+     
         setFilteredMessages(messageData);
       } catch (error: any) {
         setError(error.message || 'Something went wrong');
