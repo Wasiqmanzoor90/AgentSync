@@ -8,24 +8,22 @@ export interface UsageData {
   limit: number;
 }
 
-interface UsageDisplayProps {
-  userId?: string; // Optional user ID prop; if not provided, tries localStorage
-  onUsageUpdate?: (usage: UsageData) => void; // Optional callback when usage changes
-  refreshTrigger?: number; // Optional number to manually trigger refresh
-}
-
 export default function UsageDisplay({
   userId: propUserId,
   onUsageUpdate,
   refreshTrigger,
-}: UsageDisplayProps) {
-  const [userId, setUserId] = useState<string | null>(propUserId || null);
+}: {
+  userId?: string; // optional prop, if missing we get from localStorage
+  onUsageUpdate?: (usage: UsageData) => void;
+  refreshTrigger?: number;
+}) {
+  const [userId, setUserId] = useState<string | undefined>(propUserId);
   const [dailyUsage, setDailyUsage] = useState(0);
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // If no userId prop provided, load from localStorage on client side
+  // Load userId from localStorage if not provided via prop
   useEffect(() => {
     if (!userId && typeof window !== 'undefined') {
       const storedId = localStorage.getItem('id');
@@ -33,7 +31,6 @@ export default function UsageDisplay({
     }
   }, [userId]);
 
-  // Fetch usage data from API for given userId
   const fetchUsage = useCallback(async () => {
     if (!userId) return;
 
@@ -47,25 +44,22 @@ export default function UsageDisplay({
         dailyusage: data.dailyusage || 0,
         limit: data.limit || 10,
       };
-
       setDailyUsage(usageData.dailyusage);
       setLimit(usageData.limit);
       onUsageUpdate?.(usageData);
       setError(null);
     } catch (err) {
-      console.error('Error fetching usage:', err);
       setError('Failed to load usage data');
     } finally {
       setLoading(false);
     }
   }, [userId, onUsageUpdate]);
 
-  // Fetch usage on userId change
+  // Fetch usage initially & on userId or refreshTrigger change
   useEffect(() => {
     if (userId) fetchUsage();
   }, [userId, fetchUsage]);
 
-  // Manual refresh when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger !== undefined && userId) {
       fetchUsage();
@@ -75,16 +69,12 @@ export default function UsageDisplay({
   // Poll usage every 30 seconds
   useEffect(() => {
     if (!userId) return;
-    const interval = setInterval(() => {
-      fetchUsage();
-    }, 30000);
+    const interval = setInterval(fetchUsage, 30000);
     return () => clearInterval(interval);
   }, [userId, fetchUsage]);
 
-  // Percentage for progress bar
   const progressValue = limit > 0 ? (dailyUsage / limit) * 100 : 0;
 
-  // Redirect to upgrade/checkout page
   const handleUpgrade = async () => {
     try {
       const res = await fetch('/api/checkout', { method: 'POST' });
@@ -94,35 +84,18 @@ export default function UsageDisplay({
       } else {
         alert('Failed to start checkout');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert('Error starting checkout');
     }
   };
 
-  if (loading) {
-    return (
-      <Box p={2}>
-        <Typography variant="body2">Loading usage...</Typography>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box p={2}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
+  if (loading) return <Box p={2}><Typography>Loading usage...</Typography></Box>;
+  if (error) return <Box p={2}><Alert severity="error">{error}</Alert></Box>;
 
   return (
     <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
       <Box display="flex" justifyContent="space-between" mb={1} alignItems="center">
-        <Typography variant="body2" color="text.secondary">
-          Daily Usage
-        </Typography>
-
+        <Typography variant="body2" color="text.secondary">Daily Usage</Typography>
         {dailyUsage >= limit ? (
           <button
             style={{
