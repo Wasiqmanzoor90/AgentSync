@@ -177,7 +177,7 @@ export default function ChatContainer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          sessionId: user.id // Use user ID as session ID for conversation memory
+          sessionId: user?.id // Use user ID as session ID for conversation memory
         }),
       });
 
@@ -199,19 +199,19 @@ export default function ChatContainer() {
       };
       setMessages(prev => [...prev, aiMessage]);
 
-      
+
       // Save user input to history
       await fetch('/api/agents/inputData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, content: messageText }),
+        body: JSON.stringify({ userId: user?.id, content: messageText }),
       });
 
       // Update usage counter
       const incrementResponse = await fetch('/api/agents/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: user?.id }),
       });
 
       if (!incrementResponse.ok) {

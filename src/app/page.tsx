@@ -40,13 +40,14 @@ const AgentsYUCLanding = () => {
             </div>
 
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-blue-600 transition-colors">Pricing</a>
-              <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-              style={{ backgroundColor: '#6366f1' }}>
-                Upgrade
-              </button>
+              <a className="text-gray-600 hover:text-blue-600 transition-colors"  
+               onClick={() => (window.location.href = "/pages/component/landingpages/feature")}>Features</a>
+
+              <a className="text-gray-600 hover:text-blue-600 transition-colors"
+               onClick={() => (window.location.href = "/pages/component/landingpages/pricing")}>Pricing</a>
+               
+              <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors"
+                onClick={() => (window.location.href = "/pages/component/landingpages/about")}>About</a>
             </nav>
 
           
@@ -222,7 +223,7 @@ const AgentsYUCLanding = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Starter</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$29</span>
+                  <span className="text-4xl font-bold text-gray-900">$0</span>
                   <span className="text-gray-600">/month</span>
                 </div>
                 <p className="text-gray-600">Perfect for small teams</p>
@@ -243,7 +244,8 @@ const AgentsYUCLanding = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+              <button className="w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            onClick={()=>(window.location.href='/pages/auth/login')} >
                 Start Free Trial
               </button>
             </div>
@@ -258,7 +260,7 @@ const AgentsYUCLanding = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Professional</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$79</span>
+                  <span className="text-4xl font-bold text-gray-900">$19</span>
                   <span className="text-gray-600">/month</span>
                 </div>
                 <p className="text-gray-600">Best for growing businesses</p>
@@ -283,8 +285,9 @@ const AgentsYUCLanding = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                Start Free Trial
+              <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+               onClick={()=>(window.location.href='/pages/auth/login')}>
+                Start Trial
               </button>
             </div>
 
@@ -292,7 +295,7 @@ const AgentsYUCLanding = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Enterprise</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$199</span>
+                  <span className="text-4xl font-bold text-gray-900">$99</span>
                   <span className="text-gray-600">/month</span>
                 </div>
                 <p className="text-gray-600">For large organizations</p>
@@ -317,7 +320,8 @@ const AgentsYUCLanding = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+              <button className="w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+               onClick={()=>(window.location.href='/pages/auth/login')}>
                 Contact Sales
               </button>
             </div>
