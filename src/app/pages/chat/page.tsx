@@ -32,7 +32,8 @@ import { Message } from '../../../../types/message';
 import SearchHistoryPanel from '../component/chat/inputData';
 import Sidebar from '../component/chat/slidebar';
 import VoiceInput from '../component/chat/VoiceAssisatnt';
-import Navbar from '../component/chat/Navbar'; // Import the new Navbar component
+import Navbar from '../component/chat/Navbar';
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for generating clientUserId
 
 // Design system constants for consistent theming
 const DESIGN_TOKENS = {
@@ -56,9 +57,9 @@ const DESIGN_TOKENS = {
     background: 'linear-gradient(180deg, #fafbff 0%, #f1f5ff 100%)',
   },
   spacing: {
-    navbar: 72, // Fixed navbar height
-    container: 2, // Container padding
-    section: 3, // Section spacing
+    navbar: 72,
+    container: 2,
+    section: 3,
   },
   borderRadius: {
     sm: 8,
@@ -88,7 +89,7 @@ export default function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const [clientUserId, setClientUserId] = useState<string | null>(null);
   // Error and usage state
   const [usageError, setUsageError] = useState<string | null>(null);
   const [currentUsage, setCurrentUsage] = useState<UsageData>({ dailyusage: 0, limit: 5 });
@@ -103,20 +104,17 @@ export default function ChatContainer() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Handle voice input transcript changes
-   * Updates the input field with the transcribed text
+   * Initialize clientUserId from localStorage or generate a new one
    */
-  const handleVoiceTranscript = (transcript: string) => {
-    setInput(transcript);
-  };
-
-  /**
-   * Handle navbar menu button click
-   * Opens the sidebar for chat history
-   */
-  const handleMenuClick = () => {
-    setSidebarOpen(true);
-  };
+  useEffect(() => {
+    let storedId = localStorage.getItem('clientUserId');
+    if (!storedId) {
+      storedId = uuidv4();
+      localStorage.setItem('clientUserId', storedId);
+    }
+    setClientUserId(storedId);
+    console.log('Initialized clientUserId:', storedId);
+  }, []);
 
   /**
    * Auto-scroll to bottom when new messages arrive
@@ -126,13 +124,13 @@ export default function ChatContainer() {
   }, [messages]);
 
   /**
-   * Redirect to login if user is not authenticated
+   * Redirect to login if user is not authenticated and no clientUserId
    */
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && !clientUserId) {
       router.replace('/');
     }
-  }, [isLoading, user, router]);
+  }, [isLoading, user, clientUserId, router]);
 
   /**
    * Handle scroll events to show/hide scroll-to-top button
@@ -146,6 +144,20 @@ export default function ChatContainer() {
   };
 
   /**
+   * Handle voice input transcript changes
+   */
+  const handleVoiceTranscript = (transcript: string) => {
+    setInput(transcript);
+  };
+
+  /**
+   * Handle navbar menu button click
+   */
+  const handleMenuClick = () => {
+    setSidebarOpen(true);
+  };
+
+  /**
    * Send message to AI and handle the complete flow
    */
   const sendMessage = async () => {
@@ -153,6 +165,17 @@ export default function ChatContainer() {
     if (!input.trim() || loading || currentUsage.dailyusage >= currentUsage.limit) {
       return;
     }
+
+const storedClientId =
+  typeof window !== 'undefined' ? localStorage.getItem('clientUserId') : null;
+
+const effectiveUserId = user?.id || storedClientId;
+
+if (!effectiveUserId) {
+  setUsageError('User ID is missing. Please log in again.');
+  return;
+}
+
 
     setUsageError(null);
     const messageText = input.trim();
@@ -177,7 +200,7 @@ export default function ChatContainer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          sessionId: user?.id // Use user ID as session ID for conversation memory
+          sessionId: effectiveUserId // Use effectiveUserId
         }),
       });
 
@@ -199,19 +222,18 @@ export default function ChatContainer() {
       };
       setMessages(prev => [...prev, aiMessage]);
 
-
       // Save user input to history
       await fetch('/api/agents/inputData', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, content: messageText }),
+        body: JSON.stringify({ userId: effectiveUserId, content: messageText }),
       });
 
       // Update usage counter
       const incrementResponse = await fetch('/api/agents/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id }),
+        body: JSON.stringify({ userId: effectiveUserId }),
       });
 
       if (!incrementResponse.ok) {
@@ -225,15 +247,7 @@ export default function ChatContainer() {
 
     } catch (error) {
       console.error('Error sending message:', error);
-
-      // Show error message to user
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        text: 'Something went wrong. Please try again.',
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setUsageError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -257,7 +271,7 @@ export default function ChatContainer() {
 
     try {
       const response = await fetch(`/api/agents/inputDelete/${messageId}`, {
-        method: "DELETE",
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -268,8 +282,8 @@ export default function ChatContainer() {
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
       setUsageError(null);
     } catch (error) {
-      console.error("Delete message error:", error);
-      setUsageError("Failed to delete message. Please try again.");
+      console.error('Delete message error:', error);
+      setUsageError('Failed to delete message. Please try again.');
     } finally {
       setDeleteLoading(null);
     }
@@ -290,7 +304,7 @@ export default function ChatContainer() {
   };
 
   // Show loading screen while authenticating
-  if (isLoading || !user) {
+  if (isLoading || (!user && !clientUserId)) {
     return <LoadingData />;
   }
 
@@ -309,7 +323,7 @@ export default function ChatContainer() {
         title="Chat History"
         loading={loading}
       >
-        <SearchHistoryPanel userId={user.id} />
+        <SearchHistoryPanel userId={user?.id || clientUserId!} />
       </Sidebar>
 
       {/* Main chat container */}
@@ -323,7 +337,7 @@ export default function ChatContainer() {
         {/* Navigation bar component */}
         <Navbar
           onMenuClick={handleMenuClick}
-          userId={user.id}
+          userId={user?.id || clientUserId!}
           onUsageUpdate={setCurrentUsage}
           title="AI Voice Assistant"
           subtitle="Speak or type your message"
@@ -337,7 +351,7 @@ export default function ChatContainer() {
           borderBottom: `1px solid ${DESIGN_TOKENS.colors.border}`,
           background: DESIGN_TOKENS.colors.surface,
         }}>
-          <UsageDisplay userId={user.id} onUsageUpdate={setCurrentUsage} />
+          <UsageDisplay userId={user?.id || clientUserId!} onUsageUpdate={setCurrentUsage} />
         </Box>
 
         {/* Error alert section */}
