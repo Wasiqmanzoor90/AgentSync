@@ -217,14 +217,14 @@ console.log("myname iswasiq",id)
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         
-        body: JSON.stringify({ userId: id, content: messageText }),
+    body: JSON.stringify({ userId: user?.id, content: messageText }),
       });
 
       // Update usage counter
       const incrementResponse = await fetch('/api/agents/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: id }),
+        body: JSON.stringify({ userId: user?.id }),
       });
 
       if (!incrementResponse.ok) {
