@@ -96,6 +96,13 @@ export default function ChatContainer() {
   }, []);
 
 
+useEffect(() => {
+  if (user?.id) {
+    localStorage.setItem('id', user.id);
+    setId(user.id);
+  }
+}, [user]);
+
   // Core chat state management
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
