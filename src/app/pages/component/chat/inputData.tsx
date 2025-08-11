@@ -78,7 +78,7 @@ interface Message {
 }
 
 interface Props {
-  userId: string;
+  userId?: string; // Made optional since we're getting it from localStorage
 }
 
 export default function SearchHistoryPanel({ }: Props) {
@@ -91,40 +91,64 @@ export default function SearchHistoryPanel({ }: Props) {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userIdLoaded, setUserIdLoaded] = useState(false); // Add loading state
 
-useEffect(() => {
-  const storedId = localStorage.getItem('id');
-  if (storedId) {
-    setUserId(storedId);
-    console.log("hello", storedId);
-  }
-}, []);
+  // Load userId from localStorage
+  useEffect(() => {
+    const storedId = localStorage.getItem('id');
+    console.log("StoredId from localStorage:", storedId);
+    if (storedId) {
+      setUserId(storedId);
+    }
+    setUserIdLoaded(true); // Mark as loaded regardless of whether we found an ID
+  }, []);
 
+  // Fetch messages when userId is available
   useEffect(() => {
     const fetchSearchHistory = async () => {
+      if (!userId) {
+        console.log("No userId available, skipping fetch");
+        return;
+      }
+
+      console.log("Fetching messages for userId:", userId);
       setLoading(true);
       setError(null);
 
       try {
-       const res = await fetch(`/api/agents/inputData?id=${userId}`);
-      if (!res.ok) throw new Error('Failed to fetch messages');
-      const data = await res.json();
-      const messageData = data.data || [];
-      setMessages(messageData);
-     
+        const res = await fetch(`/api/agents/inputData?id=${userId}`);
+        console.log("Fetch response status:", res.status);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch messages: ${res.status} ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        console.log("Fetched data:", data);
+        
+        const messageData = data.data || [];
+        console.log("Message data:", messageData);
+        
+        setMessages(messageData);
         setFilteredMessages(messageData);
       } catch (error: any) {
+        console.error("Error fetching messages:", error);
         setError(error.message || 'Something went wrong');
       } finally {
         setLoading(false);
       }
     };
 
-    if (userId) {
+    // Only fetch when we have loaded the userId and it exists
+    if (userIdLoaded && userId) {
       fetchSearchHistory();
+    } else if (userIdLoaded && !userId) {
+      // User ID has been loaded but is null/undefined
+      console.log("No valid userId found in localStorage");
+      setError("No user ID found. Please log in again.");
     }
-  }, [userId]);
+  }, [userId, userIdLoaded]); // Include userIdLoaded in dependencies
 
   // Filter messages based on search query
   useEffect(() => {
