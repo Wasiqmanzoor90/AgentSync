@@ -1,5 +1,5 @@
 
-//Message
+//Messages
 export interface Message {
   id: string;
   text: string;
